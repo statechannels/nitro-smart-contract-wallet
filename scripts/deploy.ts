@@ -10,7 +10,9 @@ const deployFunc = async function (): Promise<void> {
     hardhatFundedAccount.address,
   );
   console.log(
-    `Deployer (${hardhatFundedAccount.address}) starting balance ${startingBalance}`,
+    `Deployer (${
+      hardhatFundedAccount.address
+    }) starting balance ${ethers.formatEther(startingBalance)} ETH`,
   );
   console.log("Starting deployment...");
 
@@ -20,22 +22,20 @@ const deployFunc = async function (): Promise<void> {
 
   const entryPointDeployer = await ethers.getContractFactory("EntryPoint");
   const entrypoint = await entryPointDeployer.deploy();
-  await entrypoint.waitForDeployment();
 
   const walletDeployer = await ethers.getContractFactory("SCBridgeWallet");
-  console.log("EntryPoint deployed to:", await entrypoint.getAddress());
+  console.log("EntryPoint deploying to:", await entrypoint.getAddress());
 
   const aliceWallet = await walletDeployer.deploy(
     aliceAddress,
     ireneAddress,
     await entrypoint.getAddress(),
   );
-  await aliceWallet.waitForDeployment();
   console.log(
     `Alice (${aliceAddress?.slice(
       0,
       12,
-    )}) SCBridgeWallet deployed to: ${await aliceWallet.getAddress()}`,
+    )}) SCBridgeWallet deploying to: ${await aliceWallet.getAddress()}`,
   );
 
   const bobWallet = await walletDeployer.deploy(
@@ -43,15 +43,21 @@ const deployFunc = async function (): Promise<void> {
     ireneAddress,
     await entrypoint.getAddress(),
   );
-  await bobWallet.waitForDeployment();
 
   console.log(
     `Bob (${bobAddress?.slice(
       0,
       12,
-    )}) SCBridgeWallet deployed to: ${await bobWallet.getAddress()}`,
+    )}) SCBridgeWallet deploying to: ${await bobWallet.getAddress()}`,
   );
 
+  await Promise.all([
+    bobWallet.waitForDeployment(),
+    aliceWallet.waitForDeployment(),
+    entrypoint.waitForDeployment(),
+  ]);
+
+  console.log("All contracts deployed");
   const initialFunding = BigInt(process.env.VITE_SCW_DEPOSIT ?? "");
   await fund(
     [

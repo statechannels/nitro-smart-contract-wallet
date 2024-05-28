@@ -2,7 +2,12 @@ export type ChainName =
   | "Hardhat A"
   | "Hardhat B"
   | "Polygon zkEVM Testnet"
-  | "scroll";
+  | "scroll"
+  | "goerli"
+  | "sepolia"
+  | "mantle"
+  | "optimism"
+  | "filecoin";
 
 export interface ChainData {
   /**
@@ -65,6 +70,46 @@ export const chains: ChainData[] = [
     name: "scroll",
     explorer: "https://sepolia.scrollscan.com/",
     symbol: "scrETH",
+    exchangeRate: 1,
+  },
+  {
+    chainID: 5n,
+    symbol: "ETH",
+    name: "goerli",
+    explorer: "https://goerli.etherscan.io",
+    exchangeRate: 1,
+    url: "https://goerli.blockpi.network/v1/rpc/public",
+  },
+  {
+    chainID: 11155111n,
+    symbol: "ETH",
+    name: "sepolia",
+    explorer: "https://sepolia.etherscan.io",
+    exchangeRate: 1,
+    url: "https://eth-sepolia.public.blastapi.io",
+  },
+  {
+    chainID: 5001n,
+    symbol: "MNT",
+    name: "mantle",
+    explorer: "https://explorer.testnet.mantle.xyz",
+    exchangeRate: 1,
+    url: "https://rpc.testnet.mantle.xyz",
+  },
+  {
+    chainID: 420n,
+    symbol: "ETH",
+    name: "optimism",
+    url: "https://optimism-goerli.public.blastapi.io",
+    explorer: "https://goerli-optimism.etherscan.io",
+    exchangeRate: 1,
+  },
+  {
+    chainID: 314159n,
+    symbol: "TFIL",
+    name: "filecoin",
+    url: "https://filecoin-calibration.chainup.net/rpc/v1",
+    explorer: "https://calibration.filfox.info/en",
     exchangeRate: 1,
   },
 ];
