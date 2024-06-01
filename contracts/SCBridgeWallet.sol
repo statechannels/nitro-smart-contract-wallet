@@ -25,9 +25,9 @@ contract SCBridgeWallet is IAccount {
   bytes32[] activeHTLCs;
   mapping(bytes32 => HTLC) htlcs;
 
-  uint highestTurnNum = 0;
-  uint challengeExpiry = 0;
-  uint public intermediaryBalance = 0;
+  uint highestTurnNum;
+  uint challengeExpiry;
+  uint public intermediaryBalance;
 
   function getStatus() public view returns (WalletStatus) {
     if (challengeExpiry == 0) {
@@ -61,11 +61,15 @@ contract SCBridgeWallet is IAccount {
   }
 
   function removeActiveHTLC(bytes32 hashLock) private {
-    for (uint i = 0; i < activeHTLCs.length; i++) {
+    for (uint i; i < activeHTLCs.length;) {
       if (activeHTLCs[i] == hashLock) {
         // Shift elements over
-        for (uint j = i; j < activeHTLCs.length - 1; j++) {
+        for (uint j = i; j < activeHTLCs.length - 1;) {
           activeHTLCs[j] = activeHTLCs[j + 1];
+
+          unchecked {
+            ++j;
+          }
         }
         // remove the duplicate at the end
         activeHTLCs.pop();
@@ -73,18 +77,25 @@ contract SCBridgeWallet is IAccount {
       }
     }
     delete htlcs[hashLock];
+
+    unchecked {
+      ++i;
+    }
   }
 
   function reclaim() public {
     require(getStatus() == WalletStatus.FINALIZED, "Wallet not finalized");
 
     // Release any expired funds back to the sender
-    for (uint i = 0; i < activeHTLCs.length; i++) {
+    for (uint i; i < activeHTLCs.length;) {
       HTLC memory htlc = htlcs[activeHTLCs[i]];
       if (htlc.to == Participant.OWNER) {
         intermediary.transfer(htlc.amount);
       }
 
+      unchecked {
+        ++i;
+      }
       // Any funds that are left over are defacto controlled by the owner
     }
 
@@ -112,13 +123,17 @@ contract SCBridgeWallet is IAccount {
     highestTurnNum = state.turnNum;
     intermediaryBalance = state.intermediaryBalance;
 
-    uint largestTimeLock = 0;
+    uint largestTimeLock;
     activeHTLCs = new bytes32[](state.htlcs.length);
-    for (uint256 i = 0; i < state.htlcs.length; i++) {
+    for (uint256 i; i < state.htlcs.length;) {
       activeHTLCs[i] = state.htlcs[i].hashLock;
       htlcs[state.htlcs[i].hashLock] = state.htlcs[i];
       if (state.htlcs[i].timelock > largestTimeLock) {
         largestTimeLock = state.htlcs[i].timelock;
+      }
+
+      unchecked {
+        ++i;
       }
     }
 
@@ -159,7 +174,7 @@ contract SCBridgeWallet is IAccount {
     uint256 // missingAccountFunds
   ) external view returns (uint256 validationData) {
     bytes memory ownerSig = userOp.signature[0:65];
-    // The owner of the wallet must always approve of any user operation to execute on it's behalf
+    // The owner of the wallet must always approve of any user operation to execute on its behalf
     require(
       validateSignature(userOpHash, ownerSig, owner) ==
         SIG_VALIDATION_SUCCEEDED,
@@ -172,7 +187,7 @@ contract SCBridgeWallet is IAccount {
     }
 
     // If the function is permitted, it can be called at any time
-    // (including when the wallet is in CHALLENGE_RAISED) with no futher checks.
+    // (including when the wallet is in CHALLENGE_RAISED) with no further checks.
     bytes4 functionSelector = bytes4(userOp.callData[0:4]);
     if (permitted(functionSelector)) return SIG_VALIDATION_SUCCEEDED;
 
@@ -207,11 +222,15 @@ contract SCBridgeWallet is IAccount {
   }
 
   function isZero(bytes memory b) internal pure returns (bool) {
-    for (uint256 i = 0; i < b.length; i++) {
+    for (uint256 i; i < b.length;) {
       if (b[i] != 0) {
         return false;
       }
     }
     return true;
+
+    unchecked {
+      ++i;
+    }
   }
 }
